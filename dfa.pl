@@ -107,6 +107,7 @@ build_followpos(node(alt, L, R, _, _, _)) :-
     build_followpos(R).
 build_followpos(node(V, L, R, _, _, _)) :-
     V \= alt,
+    V \= '*',
     build_followpos(L),
     build_followpos(R).
 
