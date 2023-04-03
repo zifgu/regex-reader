@@ -9,7 +9,7 @@ pattern(L0, L1, T) :- dis(L0, L1, T).
 % Disjunction
 % dis nodes have 2 children
 dis(L0, L1, C) :- alt(L0, L1, C).
-dis(L0, L3, dis(C1, C2)) :-
+dis(L0, L3, node(dis, C1, C2)) :-
     alt(L0, L1, C1),
     bar(L1, L2),
     dis(L2, L3, C2).
@@ -17,7 +17,7 @@ dis(L0, L3, dis(C1, C2)) :-
 % Alternative
 % alt nodes have 2 children
 alt(L0, L1, T) :- term(L0, L1, T).
-alt(L0, L2, alt(T, C)) :-
+alt(L0, L2, node(alt, T, C)) :-
     term(L0, L1, T),
     alt(L1, L2, C).
 
@@ -26,8 +26,8 @@ term(L0, L1, A) :- atom(L0, L1, A).
 term(L0, L1, Q) :- quant(L0, L1, Q).
 
 % Atom
-atom(['.' | L], L, '.').
-atom([C | L], L, C) :- pattern_char(C). 
+atom(['.' | L], L, node('.', empty, empty)).
+atom([C | L], L, node(C, empty, empty)) :- pattern_char(C). 
 atom(L0, L3, D) :-
     lparen(L0, L1),
     dis(L1, L2, D),
@@ -40,7 +40,7 @@ quantifier(['?' | L], L, '?').
 
 % Quantifier (the expression type: atom + quantifier)
 % quant nodes have 2 children - the first is the quantifier type, the second is the element
-quant(L0, L2, quant(Q, A)) :-
+quant(L0, L2, node(Q, A, empty)) :-
     atom(L0, L1, A),
     quantifier(L1, L2, Q).
 
