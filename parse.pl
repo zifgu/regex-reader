@@ -32,6 +32,11 @@ atom(L0, L3, D) :-
     lparen(L0, L1),
     dis(L1, L2, D),
     rparen(L2, L3).
+atom(L0, L3, D) :-
+    lparenbox(L0, L1),
+    dis(L1, L2, D),
+    rparenbox(L2, L3).
+
 
 % Quantifier (the symbol)
 quantifier(['*' | L], L, '*').
@@ -66,14 +71,77 @@ pattern_char(C) :- not_in(C, [
 lparen(['(' | L], L).
 rparen([')' | L], L).
 bar(['|' | L], L).
+lparenbox(['[' | L], L).
+rparenbox([']' | L], L).
+
 
 % not_in(E, L)      is true if E is not contained in L.
 not_in(_, []).
 not_in(E, [H | T]) :-
     E \= H,
     not_in(E, T).
-
 /*
+
+
+% Quantifiers
+zeroplusquantifier('*', L, R) :-
+    quantifier(['*' | L], L, '*'),
+    match(0, infinite, L, R, 0).
+
+
+oneplusquantifier('+', L, R) :-
+    quantifier(['+' | L], L, '+'),
+    match(1, infinite, L, R, 0).
+
+zerooronequantifier('?', L, R) :-
+    quantifier(['+' | L], L, '+'),
+    match(0, 1, L, R, 0).
+
+repeatrangequantifier(X,Y,L,R) : - 
+    match(X,Y,L,R,0).
+
+
+notpresent('^', L) :-
+    match(0,0,L,0).
+
+exactlyquantifier(X,L,Z) : - 
+    match(X,X,L,Z,0).
+
+% match(x,y,l,r,c) where x and y are max and min ranges L is the value counted and r is range of expression
+match(_,_,L,[],_).
+
+
+match(0, infinite, L, [H|T],C). 
+match(1, infinite, L,[L|_],C).
+match(1,_,L,[_|T],C) :- match(1,_,L,T,C).
+match(X,Y,L,[H|T],C) :- not_in(L,[H|T]);
+    match(X,Y,L,T,C1).
+    C is C1+1,
+    C >=X,
+    C <=Y.
+    
+
+%between is built in predicate
+betweenxandy(L, M, [output]) : - 
+    (between(L, M), [output]).
+
+%Digit
+isDigit(_,[]).
+isDigit(E) : - 
+    number(E). 
+
+%isletter
+isLetter(_,[]).
+isLetter(E) : - 
+    alpha(E). 
+    
+
+%Boundary Assertations
+start
+end
+wordboundaries
+nonwordboundaries
+
 =======================================================
 Test cases - parse succeeds
 =======================================================
