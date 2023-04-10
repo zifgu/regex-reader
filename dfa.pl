@@ -16,6 +16,29 @@ transition(S1, C, S2)       Is true if there is a transition from S1 to S2 on sy
 
 /*
 =======================================================
+Step 0
+=======================================================
+Convert + and ? quantifiers to expressions using only *, concatenation, and disjunction,
+which are supported by the DFA algorithm.
+*/
+
+% standardize(Tree, NewTree)             Is true if NewTree is Tree with + and ? nodes converted to equivalent nodes using only *, concatenation, and disjunction.
+standardize(empty, empty).
+standardize(node(C, empty, empty), node(C, empty, empty)).
+standardize(node('+', L, empty), node(alt, NewL, node('*', NewL, empty))) :-
+    standardize(L, NewL).
+standardize(node('?', L, empty), node(dis, NewL, node(empty, empty, empty))) :-
+    standardize(L, NewL).
+standardize(node('*', L, empty), node('*', NewL, empty)) :-
+    standardize(L, NewL).
+standardize(node(V, L, R), node(V, NewL, NewR)) :-
+    L \= empty,
+    R \= empty,
+    standardize(L, NewL),
+    standardize(R, NewR).
+
+/*
+=======================================================
 Step 1
 =======================================================
 Walk the tree, assigning an integer position to each leaf node
@@ -30,11 +53,18 @@ compute_intermediate(Tree, NewTree) :- compute_intermediate_1(Tree, NewTree, 0, 
 %                                                       the first leaf node in NewTree has position Pos + 1, and the last leaf node in NewTree has position NewPos.
 compute_intermediate_1(empty, empty, Pos, Pos).
 compute_intermediate_1(
+    node(empty, empty, empty),
+    node(empty, empty, empty, true, [], []),
+    Pos,
+    Pos
+).
+compute_intermediate_1(
     node(C, empty, empty),
     node(C, empty, empty, false, [NewPos], [NewPos]),
     Pos,
     NewPos
 ) :-
+    C \= empty,
     NewPos is Pos + 1,
     assert(pos_char(NewPos, C)).
 compute_intermediate_1(
