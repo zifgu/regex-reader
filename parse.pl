@@ -75,11 +75,22 @@ lparenbox(['[' | L], L).
 rparenbox([']' | L], L).
 
 
+%Specific cases format   /w,  /B, etc...
+slashcases('d','D','w','W','s','S','B','b').
+
+
 % not_in(E, L)      is true if E is not contained in L.
 not_in(_, []).
 not_in(E, [H | T]) :-
     E \= H,
     not_in(E, T).
+
+
+% is_in(E, L)      is true if E is contained in L.
+is_in(_, []).
+is_in(E, [H | T]) :-
+    E == H;
+    is_in(E, T).
 /*
 
 
@@ -109,8 +120,6 @@ exactlyquantifier(X,L,Z) : -
 
 % match(x,y,l,r,c) where x and y are max and min ranges L is the value counted and r is range of expression
 match(_,_,L,[],_).
-
-
 match(0, infinite, L, [H|T],C). 
 match(1, infinite, L,[L|_],C).
 match(1,_,L,[_|T],C) :- match(1,_,L,T,C).
@@ -125,10 +134,6 @@ match(X,Y,L,[H|T],C) :- not_in(L,[H|T]);
 betweenxandy(L, M, [output]) : - 
     (between(L, M), [output]).
 
-%Digit
-isDigit(_,[]).
-isDigit(E) : - 
-    number(E). 
 
 %isletter
 isLetter(_,[]).
@@ -136,12 +141,52 @@ isLetter(E) : -
     alpha(E). 
     
 
-%Boundary Assertations
-start
-end
-wordboundaries
-nonwordboundaries
+%Slashcase coverage
+isvalidbackslashcase(E,L):-
+    is_in(E, slashcases).
 
+% \s white space
+iswhitespace(E,L):-
+    L = " ",
+    E = "\s".
+
+% \S not a white space
+iswhitespace(E,L):-
+    L != " ",
+    E = "\S".
+
+% \w alphanumberic characters
+isAlpha(E,L):-
+    alnum(E,L).
+
+% \W is not alphabetic characters
+isNotAlphabet(E,L): - 
+    not alpha(E,L).
+
+%\d true if a Digit
+isDigit(_,[]).
+isDigit(E) : - 
+    number(E). 
+
+% \D true if not a digit
+isDigit(_,[]).
+isDigit(E) : - 
+    not number(E). 
+
+
+% \B is true if all of A is within a boundary \B can be in front or behind B or B2 indicates a \B is present
+iswithinBoundary(B,B2,D,E,F):- 
+    border(B,D,E), 
+    border(B2,E,F).
+
+border(_,_,_).
+border(_,A,A2).
+border(B,A,A2):- 
+    A = atom;
+
+    
+
+    
 =======================================================
 Test cases - parse succeeds
 =======================================================
