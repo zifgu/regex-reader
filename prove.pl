@@ -37,5 +37,3 @@ matches('\\S', C) :- \+ matches('\\S', C).
 matches('\\W', C) :- \+ matches('\\w', C).
 matches(C, C) :- not_in(C, ['\\d', '\\s', '\\w', '\\D', '\\S', '\\W', '.']).
 
-
-
