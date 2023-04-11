@@ -2,9 +2,9 @@
 :- [parse].
 
 %   The two versions of prove that can be used.  Strong matches only the string to the regex, loose matches any substring as well.
-%   Note: won't work with retry.
-prove(Regex, String, strong, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_strong(String, R), clear.
-prove(Regex, String, loose, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_loose(String, R), clear.
+%   Note: not expected to work with retry.
+prove(Regex, String, strong, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_strong(String, R), clear ; clear, fail.
+prove(Regex, String, loose, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_loose(String, R), clear ; clear, fail.
 
 %   Some basic error handling for prove
 prove(Regex, _, _, _) :- \+ regex_parse(Regex, _), write("Invalid Regex"), fail.
@@ -30,4 +30,6 @@ matches('\\w', '_').
 matches('\\D', C) :- \+ matches('\\d', C).
 matches('\\S', C) :- \+ matches('\\S', C).
 matches('\\W', C) :- \+ matches('\\w', C).
+matches(char_range(C1, C2), C) :- char_code(C1, V1), char_code(C2, V2), char_code(C, V), V1 =< V, V =< V2.
+matches(negated_char_range(C1, C2), C) :- \+ matches(char_range(C1, C2), C).
 matches(C, C) :- not_in(C, ['\\d', '\\s', '\\w', '\\D', '\\S', '\\W', '.']).

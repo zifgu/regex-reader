@@ -34,10 +34,26 @@ re_atom([\, 's' | L], L, node('\\s', empty, empty)).
 re_atom([\, 's' | L], L, node('\\S', empty, empty)).
 re_atom([\, 'w' | L], L, node('\\w', empty, empty)).
 re_atom([\, 'W' | L], L, node('\\W', empty, empty)).
+re_atom(L0, L1, node(C, empty, empty)) :- re_character_class(L0, L1, C).
 re_atom(L0, L3, D) :-
     re_lparen(L0, L1),
     re_dis(L1, L2, D),
     re_rparen(L2, L3).
+
+% Character classes
+re_character_class(L0, L5, char_range(C1, C2)) :-
+    re_lbracket(L0, L1),
+    re_source_char(L1, L2, C1),
+    re_dash(L2, L3),
+    re_source_char(L3, L4, C2),
+    re_rbracket(L4, L5).
+re_character_class(L0, L6, negated_char_range(C1, C2)) :-
+    re_lbracket(L0, L1),
+    re_not(L1, L2),
+    re_source_char(L2, L3, C1),
+    re_dash(L3, L4),
+    re_source_char(L4, L5, C2),
+    re_rbracket(L5, L6).
 
 % Quantifier (the symbol)
 re_quantifier(['*' | L], L, '*').
@@ -68,9 +84,16 @@ re_pattern_char(C) :- not_in(C, [
     '|'
 ]).
 
+% SourceCharacterbut not one of \ or ] or -
+re_source_char([C | L], L, C) :- not_in(C, [\, ']', '-']).
+
 % Special characters
 re_lparen(['(' | L], L).
 re_rparen([')' | L], L).
+re_lbracket(['[' | L], L).
+re_rbracket([']' | L], L).
+re_dash(['-' | L], L).
+re_not(['^' | L], L).
 re_bar(['|' | L], L).
 
 % not_in(E, L)      is true if E is not contained in L.
