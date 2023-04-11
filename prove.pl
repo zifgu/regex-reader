@@ -1,196 +1,41 @@
-% regex_parse(Str, Tree)    is true if Str is a valid regex and its syntax tree is Tree.
-regex_parse(Str, Tree) :-
-    string_chars(Str, Chars),
-    pattern(Chars, [], Tree).
+:- [dfa].
+:- [parse].
 
-% Pattern: top-level regex
-pattern(L0, L1, T) :- dis(L0, L1, T).
+%   The two versions of prove that can be used.  Strong matches only the string to the regex, loose matches any substring as well.
+prove(Regex, String, strong, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_strong(String, R), clear.
+prove(Regex, String, loose, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_loose(String, R), clear.
 
-% Disjunction
-% dis nodes have 2 children
-dis(L0, L1, C) :- alt(L0, L1, C).
-dis(L0, L3, node(dis, C1, C2)) :-
-    alt(L0, L1, C1),
-    bar(L1, L2),
-    dis(L2, L3, C2).
+%   Some basic error handling for prove
+prove(Regex, _, _, _) :- \+ regex_parse(Regex, _), write("Invalid Regex").
+prove(_, _, Q, _) :- \+ Q = strong, \+ Q = loose, write("Please specify strong or loose").
 
-% Alternative
-% alt nodes have 2 children
-alt(L0, L1, T) :- term(L0, L1, T).
-alt(L0, L2, node(alt, T, C)) :-
-    term(L0, L1, T),
-    alt(L1, L2, C).
+%   Strong proof code, walks through the state machine using the string and if the string ends at an accepting state returns true.
+prove_strong(Str, R) :- start(S), atom_chars(Str, C), prove_move_strong(C, S, Q), atom_chars(R, Q).
+prove_move_strong([H|[]], S, [H]) :- transition(S, H, S1), accepting(S1).
+prove_move_strong([H|T], S, [H|R]) :- transition(S, H, S1), prove_move_strong(T, S1, R).
+prove_move_strong([H|[]], S, [H]) :- transition(S, ., S1), accepting(S1).
+prove_move_strong([H|T], S, [H|R]) :- transition(S, ., S1), prove_move_strong(T, S1, R).
 
-% Term
-term(L0, L1, A) :- atom(L0, L1, A).
-term(L0, L1, Q) :- quant(L0, L1, Q).
-
-% Atom
-atom(['.' | L], L, node('.', empty, empty)). % for . 
-atom([C | L], L, node(C, empty, empty)) :- pattern_char(C).  % normal character
-atom([C | L], L, node(C, empty, empty)) :- characterclass(C). %alpha
-atom([\, 'd', | L], L, node('//d', empty, empty)).
-atom([\, 'D', | L], L, node('//D', empty, empty)).
-atom([\, 'w', | L], L, node('//w', empty, empty)).
-atom([\, 'W', | L], L, node('//W', empty, empty)).
-atom([\, 's', | L], L, node('//s', empty, empty)).
-atom([\, 'S', | L], L, node('//S', empty, empty)).
-atom([\, '\', | L], L, node('//S', empty, empty)).
-atom(L0, L3, D) :-           % for disjunction
-    lparen(L0, L1),
-    dis(L1, L2, D),
-    rparen(L2, L3).   
-atom(L0, L3, B) :-           % for ranges
-    lparensq(L0, L1),
-    between(L1, L2, B),
-    rparensq(L2, L3).   
-
-% Quantifier (the symbol)
-quantifier(['*' | L], L, '*').
-quantifier(['+' | L], L, '+').
-quantifier(['?' | L], L, '?').
-
-% Quantifier (the expression type: atom + quantifier)
-% quant nodes have 2 children - the first is the quantifier type, the second is the element
-quant(L0, L2, node(Q, A, empty)) :-
-    atom(L0, L1, A),
-    quantifier(L1, L2, Q).
-
-% PatternCharacter
-pattern_char(C) :- not_in(C, [
-    '^',
-    '$',
-    \,
-    '.',
-    '*',
-    '+',
-    '?',
-    '(',
-    ')',
-    '[',
-    ']',
-    '{',
-    '}',
-    '|'
-]).
-
-% Special characters
-lparen(['(' | L], L).
-rparen([')' | L], L).
-bar(['|' | L], L).
-lparensq(['[' | L], L).
-rparensq([']' | L], L).
-
-% not_in(E, L)      is true if E is not contained in L.
-not_in(_, []).
-not_in(E, [H | T]) :-
-    E \= H,
-    not_in(E, T).
-
-% is_in(E, L)      is true if E is contained in L.
-is_in(_, []).
-is_in(E, [H | T]) :-
-    E == H,
-    is_in(E, T).
-
-/*
-
-% Character class independant
-characterclass(C):-
-    char_type(C, csym);
-    char_type(C, period);
-
-% A-Z, 0-9 etc... used to classify legit dash cases
-
-between(L0,L2,D): - 
-    char_type(L0, digit),
-    char_code(D, 45),
-    char_type(L2, digit),
-    char_code(L0, X),
-    char_code(L2, Y),
-    X < Y.
-
-between(L0,L2,D): - 
-    char_type(L0, alpha),
-    char_code(D, 45),
-    char_type(L2, alpha),
-    char_code(L0, X),
-    char_code(L2, Y),
-    X < Y.
+%   Loose proof code, walks through the state machine using the string, and if an accepting state is reached returns true.
+prove_loose(Str, R) :- start(S), atom_chars(Str, C), prove_move_loose(C, S, Q), atom_chars(R, Q).
+prove_move_loose([H|_], S, [H]) :- transition(S, H, S1), accepting(S1).
+prove_move_loose([H|T], S, [H|R]) :- transition(S, H, S1), prove_move_loose(T, S1, R).
+prove_move_loose([H|_], S, [H]) :- transition(S, ., S1), accepting(S1).
+prove_move_loose([H|T], S, [H|R]) :- transition(S, ., S1), prove_move_loose(T, S1, R).
+prove_move_loose([_|T], S, R) :- start(S), prove_move_loose(T, S, R).
 
 
-    
-    
-   
+%   matches(Node, Char)     Is true if the character or character class Node matches Char.
+matches('.', _).
+matches(characterclass(C2), C) : char_code(C2, Y), char_code(C,Y);
+matches('\\d', C) :- char_type(C, digit).
+matches('\\s', C) :- char_type(C, space).
+matches('\\w', C) :- char_type(C, alnum).
+matches('\\w', '_').
+matches('\\D', C) :- \+ matches('\\d', C).
+matches('\\S', C) :- \+ matches('\\S', C).
+matches('\\W', C) :- \+ matches('\\w', C).
+matches(C, C) :- not_in(C, ['\\d', '\\s', '\\w', '\\D', '\\S', '\\W', '.']).
 
 
-=======================================================
-Test cases - parse succeeds
-=======================================================
 
-Atoms:
-regex_parse("a", Tree).
-regex_parse(".", Tree).
-
-Alternatives:
-regex_parse("ab", Tree).
-regex_parse("abc", Tree).
-regex_parse("a.b", Tree).
-
-Quantifiers:
-regex_parse("a*", Tree).
-regex_parse("a*bc", Tree).
-regex_parse("ab?c", Tree).
-regex_parse("abc+", Tree).
-
-Disjunction:
-regex_parse("a|b", Tree).
-regex_parse("ab|c", Tree).
-regex_parse("a|bc", Tree).
-regex_parse("a|b|c", Tree).
-regex_parse("aa|bb|cc", Tree).
-regex_parse("a|b+|d", Tree).
-
-Parentheses:
-regex_parse("(a)b", Tree).
-regex_parse("a(b)", Tree).
-regex_parse("(ab)c", Tree).
-regex_parse("(a?b)c", Tree).
-regex_parse("(ab*)c", Tree).
-regex_parse("(ab)+c", Tree).
-regex_parse("a(b|c)", Tree).
-regex_parse("a(bc|d|e)", Tree).
-regex_parse("(a|b)*", Tree).
-regex_parse("(a?b)|1+", Tree).
-regex_parse("(a|b)?(b|c)", Tree).
-
-Simple real-world examples: (sources: https://cs.lmu.edu/~ray/notes/regex/)
-regex_parse("gray|grey", Tree).
-regex_parse("gr(a|e)y", Tree).
-regex_parse("rege(x(es)?|xps?)", Tree).
-
-=======================================================
-Test cases - parse fails
-=======================================================
-Empty:
-regex_parse("", Tree).
-
-Improper quantifiers:
-regex_parse("*", Tree).
-regex_parse("*1", Tree).
-regex_parse("a*?", Tree).
-
-Improper disjunction:
-regex_parse("a|+", Tree).
-regex_parse("a|", Tree).
-regex_parse("|ab", Tree).
-regex_parse("a||b", Tree).
-
-Improper parentheses:
-regex_parse("()", Tree).
-regex_parse("(+)", Tree).
-regex_parse("(ab+c", Tree).
-regex_parse("(a))", Tree).
-regex_parse("ab)+c", Tree).
-regex_parse("a((b)+c", Tree).
-*/
