@@ -3,7 +3,7 @@
 Regex evaluation interface
 =======================================================
 
-Example usage:
+Intended usage example:
 prove("([A-Z])\w+", "Evaluate", strong, R).
 
 Note: due to the use of dynamic assert, this tool is not expected to work with retry.
