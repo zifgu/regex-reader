@@ -6,7 +6,7 @@ Regex evaluation interface
 Example usage:
 prove("([A-Z])\w+", "Evaluate", strong, R).
 
-Note: these predicates are not expected to work with retry.
+Note: due to the use of dynamic assert, this tool is not expected to work with retry.
 */
 
 :- [dfa].
