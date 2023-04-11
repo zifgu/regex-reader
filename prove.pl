@@ -5,6 +5,10 @@
 prove(Regex, String, strong, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_strong(String, R), clear.
 prove(Regex, String, loose, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_loose(String, R), clear.
 
+%   Some basic error handling for prove
+prove(Regex, _, _, _) :- \+ regex_parse(Regex, _), write("Invalid Regex").
+prove(_, _, Q, _) :- \+ Q = strong, \+ Q = loose, write("Please specify strong or loose").
+
 %   Strong proof code, walks through the state machine using the string and if the string ends at an accepting state returns true.
 prove_strong(Str, R) :- start(S), atom_chars(Str, C), prove_move_strong(C, S, Q), atom_chars(R, Q).
 prove_move_strong([H|[]], S, [H]) :- transition(S, H, S1), accepting(S1).
