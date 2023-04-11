@@ -1,31 +1,35 @@
-% regex_parse(Str, Tree)    is true if Str is a valid regex and its syntax tree is Tree.
+/*
+=======================================================
+Regex to syntax tree
+=======================================================
+*/
+
+%   regex_parse(Str, Tree)    is true if Str is a valid regex and its syntax tree is Tree.
 regex_parse(Str, Tree) :-
     string_chars(Str, Chars),
     re_pattern(Chars, [], Tree).
 
-% Pattern: top-level regex
+%   Patterns, i.e. top-level regexes
 re_pattern(L0, L1, T) :- re_dis(L0, L1, T).
 
-% Disjunction
-% dis nodes have 2 children
+%   Disjunctions (parsed to nodes with 2 children)
 re_dis(L0, L1, C) :- re_alt(L0, L1, C).
 re_dis(L0, L3, node(dis, C1, C2)) :-
     re_alt(L0, L1, C1),
     re_bar(L1, L2),
     re_dis(L2, L3, C2).
 
-% Alternative
-% alt nodes have 2 children
+%   Alternatives, i.e. concatenation (parsed to nodes with 2 children)
 re_alt(L0, L1, T) :- re_term(L0, L1, T).
 re_alt(L0, L2, node(alt, T, C)) :-
     re_term(L0, L1, T),
     re_alt(L1, L2, C).
 
-% Term
+%   Terms
 re_term(L0, L1, A) :- re_atom(L0, L1, A).
 re_term(L0, L1, Q) :- re_quant(L0, L1, Q).
 
-% Atom
+%   Atoms
 re_atom(['.' | L], L, node('.', empty, empty)).
 re_atom([C | L], L, node(C, empty, empty)) :- re_pattern_char(C). 
 re_atom([\, 'd' | L], L, node('\\d', empty, empty)).
@@ -40,7 +44,7 @@ re_atom(L0, L3, D) :-
     re_dis(L1, L2, D),
     re_rparen(L2, L3).
 
-% Character classes
+%   Character classes
 re_character_class(L0, L5, char_range(C1, C2)) :-
     re_lbracket(L0, L1),
     re_source_char(L1, L2, C1),
@@ -55,39 +59,23 @@ re_character_class(L0, L6, negated_char_range(C1, C2)) :-
     re_source_char(L4, L5, C2),
     re_rbracket(L5, L6).
 
-% Quantifier (the symbol)
+%   Quantifier symbols
 re_quantifier(['*' | L], L, '*').
 re_quantifier(['+' | L], L, '+').
 re_quantifier(['?' | L], L, '?').
 
-% Quantifier (the expression type: atom + quantifier)
-% quant nodes have 2 children - the first is the quantifier type, the second is the element
+%   Quantifier expressions (parsed to nodes with 1 child).
 re_quant(L0, L2, node(Q, A, empty)) :-
     re_atom(L0, L1, A),
     re_quantifier(L1, L2, Q).
 
-% PatternCharacter
-re_pattern_char(C) :- not_in(C, [
-    '^',
-    '$',
-    \,
-    '.',
-    '*',
-    '+',
-    '?',
-    '(',
-    ')',
-    '[',
-    ']',
-    '{',
-    '}',
-    '|'
-]).
+%   Characters allowed in general regex patterns
+re_pattern_char(C) :- not_in(C, ['^', '$', \, '.', '*', '+', '?', '(', ')', '[', ']', '{', '}', '|']).
 
-% SourceCharacterbut not one of \ or ] or -
+%   Characters allowed inside character classes
 re_source_char([C | L], L, C) :- not_in(C, [\, ']', '-']).
 
-% Special characters
+%   Various control characters matched during parsing
 re_lparen(['(' | L], L).
 re_rparen([')' | L], L).
 re_lbracket(['[' | L], L).
@@ -96,7 +84,7 @@ re_dash(['-' | L], L).
 re_not(['^' | L], L).
 re_bar(['|' | L], L).
 
-% not_in(E, L)      is true if E is not contained in L.
+%   not_in(E, L)      is true if character E is not contained in list L.
 not_in(_, []).
 not_in(E, [H | T]) :-
     E \= H,
