@@ -141,6 +141,16 @@ regex_parse("a|b|c", Tree).
 regex_parse("aa|bb|cc", Tree).
 regex_parse("a|b+|d", Tree).
 
+Character classes: (note that to type a backslash in Prolog, you have to type \\ - to escape it)
+regex_parse("\\D", Tree).
+regex_parse("\\w+", Tree).
+regex_parse("\\w|a|\\d+", Tree).
+regex_parse(".|[A-Z]", Tree).
+regex_parse("[^A-Z]", Tree).
+regex_parse("[Ab.]", Tree).
+regex_parse("b[^Abc]", Tree).
+regex_parse("[^Abc|^]", Tree).
+
 Parentheses:
 regex_parse("(a)b", Tree).
 regex_parse("a(b)", Tree).
@@ -176,6 +186,14 @@ regex_parse("a|", Tree).
 regex_parse("|ab", Tree).
 regex_parse("a||b", Tree).
 
+Improper character classes:
+regex_parse("[]", Tree).
+regex_parse("[-Z]", Tree).
+regex_parse("[A-]", Tree).
+regex_parse("[^]", Tree).
+regex_parse("[^A-Z", Tree).
+regex_parse("Abc]", Tree).
+
 Improper parentheses:
 regex_parse("()", Tree).
 regex_parse("(+)", Tree).
@@ -183,4 +201,5 @@ regex_parse("(ab+c", Tree).
 regex_parse("(a))", Tree).
 regex_parse("ab)+c", Tree).
 regex_parse("a((b)+c", Tree).
+regex_parse("[a(b]+c)", Tree).
 */
