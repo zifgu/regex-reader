@@ -41,4 +41,6 @@ matches('\\S', C) :- \+ matches('\\s', C).
 matches('\\W', C) :- \+ matches('\\w', C).
 matches(char_range(C1, C2), C) :- char_code(C1, V1), char_code(C2, V2), char_code(C, V), V1 =< V, V =< V2.
 matches(negated_char_range(C1, C2), C) :- \+ matches(char_range(C1, C2), C).
+matches(chars(Cs), C) :- is_in(C, Cs).
+matches(negated_chars(Cs), C) :- not_in(C, Cs).
 matches(C, C) :- not_in(C, ['\\d', '\\s', '\\w', '\\D', '\\S', '\\W', '.']).

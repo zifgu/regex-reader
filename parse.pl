@@ -58,6 +58,16 @@ re_character_class(L0, L6, negated_char_range(C1, C2)) :-
     re_dash(L3, L4),
     re_source_char(L4, L5, C2),
     re_rbracket(L5, L6).
+re_character_class(L0, L3, chars(Cs)) :-
+    re_lbracket(L0, L1),
+    re_not_not(L1, _),
+    re_source_chars(L1, L2, Cs),
+    re_rbracket(L2, L3).
+re_character_class(L0, L4, negated_chars(Cs)) :-
+    re_lbracket(L0, L1),
+    re_not(L1, L2),
+    re_source_chars(L2, L3, Cs),
+    re_rbracket(L3, L4).
 
 %   Quantifier symbols
 re_quantifier(['*' | L], L, '*').
@@ -75,6 +85,12 @@ re_pattern_char(C) :- not_in(C, ['^', '$', \, '.', '*', '+', '?', '(', ')', '[',
 %   Characters allowed inside character classes
 re_source_char([C | L], L, C) :- not_in(C, [\, ']', '-']).
 
+%   Sequence of characters allowed inside character classes
+re_source_chars(L0, L1, [C]) :- re_source_char(L0, L1, C).
+re_source_chars(L0, L2, [C | Cs]) :- 
+    re_source_char(L0, L1, C),
+    re_source_chars(L1, L2, Cs).
+
 %   Various control characters matched during parsing
 re_lparen(['(' | L], L).
 re_rparen([')' | L], L).
@@ -82,6 +98,7 @@ re_lbracket(['[' | L], L).
 re_rbracket([']' | L], L).
 re_dash(['-' | L], L).
 re_not(['^' | L], L).
+re_not_not([C | L], L) :- C \= '^'.
 re_bar(['|' | L], L).
 
 %   not_in(E, L)      is true if character E is not contained in list L.
@@ -89,6 +106,12 @@ not_in(_, []).
 not_in(E, [H | T]) :-
     E \= H,
     not_in(E, T).
+
+%   is_in(E, L)      is true if E is contained in L.
+is_in(E, [E | _]).
+is_in(E, [H | T]) :-
+    E \= H,
+    is_in(E, T).
 
 /*
 =======================================================
