@@ -36,14 +36,12 @@ atom([\, 'W', | L], L, node('//W', empty, empty)).
 atom([\, 's', | L], L, node('//s', empty, empty)).
 atom([\, 'S', | L], L, node('//S', empty, empty)).
 atom([\, '\', | L], L, node('//S', empty, empty)).
+%atom([\, C, | L], L, node(C, empty, empty)) : - characterclass(C).
+
 atom(L0, L3, D) :-           % for disjunction
     lparen(L0, L1),
     dis(L1, L2, D),
     rparen(L2, L3).   
-atom(L0, L3, B) :-           % for ranges
-    lparensq(L0, L1),
-    between(L1, L2, B),
-    rparensq(L2, L3).   
 
 % Quantifier (the symbol)
 quantifier(['*' | L], L, '*').
@@ -78,8 +76,6 @@ pattern_char(C) :- not_in(C, [
 lparen(['(' | L], L).
 rparen([')' | L], L).
 bar(['|' | L], L).
-lparensq(['[' | L], L).
-rparensq([']' | L], L).
 
 % not_in(E, L)      is true if E is not contained in L.
 not_in(_, []).
@@ -99,30 +95,6 @@ is_in(E, [H | T]) :-
 characterclass(C):-
     char_type(C, csym);
     char_type(C, period);
-
-% A-Z, 0-9 etc... used to classify legit dash cases
-
-between(L0,L2,D): - 
-    char_type(L0, digit),
-    char_code(D, 45),
-    char_type(L2, digit),
-    char_code(L0, X),
-    char_code(L2, Y),
-    X < Y.
-
-between(L0,L2,D): - 
-    char_type(L0, alpha),
-    char_code(D, 45),
-    char_type(L2, alpha),
-    char_code(L0, X),
-    char_code(L2, Y),
-    X < Y.
-
-
-    
-    
-   
-
 
 =======================================================
 Test cases - parse succeeds
