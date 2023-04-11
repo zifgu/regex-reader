@@ -26,12 +26,22 @@ term(L0, L1, A) :- atom(L0, L1, A).
 term(L0, L1, Q) :- quant(L0, L1, Q).
 
 % Atom
-atom(['.' | L], L, node('.', empty, empty)).
-atom([C | L], L, node(C, empty, empty)) :- pattern_char(C). 
-atom(L0, L3, D) :-
+atom(['.' | L], L, node('.', empty, empty)). % for . 
+atom([C | L], L, node(C, empty, empty)) :- pattern_char(C).  % normal character
+atom([C | L], L, node(C, empty, empty)) :- characterclass(C). %alpha
+atom([\, 'd', | L], L, node('//d', empty, empty)).
+atom([\, 'D', | L], L, node('//D', empty, empty)).
+atom([\, 'w', | L], L, node('//w', empty, empty)).
+atom([\, 'W', | L], L, node('//W', empty, empty)).
+atom([\, 's', | L], L, node('//s', empty, empty)).
+atom([\, 'S', | L], L, node('//S', empty, empty)).
+atom([\, '\', | L], L, node('//S', empty, empty)).
+%atom([\, C, | L], L, node(C, empty, empty)) : - characterclass(C).
+
+atom(L0, L3, D) :-           % for disjunction
     lparen(L0, L1),
     dis(L1, L2, D),
-    rparen(L2, L3).
+    rparen(L2, L3).   
 
 % Quantifier (the symbol)
 quantifier(['*' | L], L, '*').
@@ -73,7 +83,19 @@ not_in(E, [H | T]) :-
     E \= H,
     not_in(E, T).
 
+% is_in(E, L)      is true if E is contained in L.
+is_in(_, []).
+is_in(E, [H | T]) :-
+    E == H,
+    is_in(E, T).
+
 /*
+
+% Character class independant
+characterclass(C):-
+    char_type(C, csym);
+    char_type(C, period);
+
 =======================================================
 Test cases - parse succeeds
 =======================================================
