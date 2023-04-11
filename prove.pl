@@ -7,8 +7,8 @@ prove(Regex, String, strong, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), pr
 prove(Regex, String, loose, R) :- regex_parse(Regex, Tree), dfa_parse(Tree), prove_loose(String, R), clear ; clear, fail.
 
 %   Some basic error handling for prove
-prove(Regex, _, _, _) :- \+ regex_parse(Regex, _), write("Invalid Regex"), fail.
-prove(_, _, Q, _) :- \+ Q = strong, \+ Q = loose, write("Please specify strong or loose"), fail.
+prove(Regex, _, _, _) :- \+ regex_parse(Regex, _), write("Invalid or unsupported regex syntax."), fail.
+prove(_, _, Q, _) :- \+ Q = strong, \+ Q = loose, write("Please specify strong or loose."), fail.
 
 %   Strong proof code, walks through the state machine using the string and if the string ends at an accepting state returns true.
 prove_strong(Str, R) :- start(S), string_chars(Str, C), prove_move_strong(C, S, Q), string_chars(R, Q).
