@@ -26,7 +26,6 @@ matches('.', _).
 matches('\\d', C) :- char_type(C, digit).
 matches('\\s', C) :- char_type(C, space).
 matches('\\w', C) :- char_type(C, alnum).
-matches('\\w', C) :- char_type(C, digit).
 matches('\\w', '_').
 matches('\\D', C) :- \+ matches('\\d', C).
 matches('\\S', C) :- \+ matches('\\S', C).
