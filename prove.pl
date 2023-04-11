@@ -25,10 +25,9 @@ prove_move_loose([_|T], S, R) :- start(S), prove_move_loose(T, S, R).
 matches('.', _).
 matches('\\d', C) :- char_type(C, digit).
 matches('\\s', C) :- char_type(C, space).
-matches('\\w', C) :- char_type(C, alnum).
-matches('\\w', '_').
+matches('\\w', C) :- char_type(C, csym).
 matches('\\D', C) :- \+ matches('\\d', C).
-matches('\\S', C) :- \+ matches('\\S', C).
+matches('\\S', C) :- \+ matches('\\s', C).
 matches('\\W', C) :- \+ matches('\\w', C).
 matches(char_range(C1, C2), C) :- char_code(C1, V1), char_code(C2, V2), char_code(C, V), V1 =< V, V =< V2.
 matches(negated_char_range(C1, C2), C) :- \+ matches(char_range(C1, C2), C).
